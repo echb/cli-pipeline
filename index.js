@@ -2,19 +2,26 @@
 
 import inquirer from 'inquirer';
 import { join, dirname } from 'path';
-import { exec } from 'child_process';
-import { execSync } from 'child_process';
+import { execSync, exec } from 'child_process';
+import { version } from 'process';
 import { fileURLToPath } from 'url';
 import ora from 'ora';
+
+const sleep = (ms = 1500) => new Promise((r) => setTimeout(r, ms));
 
 export class Pipeline {
   #branches
   #__filename = fileURLToPath(import.meta.url);
   #__dirname = dirname(this.#__filename);
-  #spinner = ora('Loading unicorns')
+  #spinner = ora('Loading...')
+  #currentNodeVersion = parseInt(version.split('.').at(0).replace('v', ''))
+  #requiredNodeVersion = null
+  #requireNodeVersion = true
 
-  constructor(branches = []) {
+  constructor({ branches = [], nodeVersion = null, requireNodeVersion = true }) {
     this.#branches = branches;
+    this.#requiredNodeVersion = parseInt(nodeVersion)
+    this.#requireNodeVersion = requireNodeVersion;
   }
 
   getPathFrom = (path = '') => join(this.#__dirname, path)
@@ -23,19 +30,8 @@ export class Pipeline {
     return this.#branches
   }
 
-  #wichEnv = async () => {
-    const { environment } = await inquirer.prompt
-      ({
-        name: 'environment',
-        type: 'list',
-        choices: this.#branches,
-        message: 'question',
-      })
-    return environment
-  }
-
-  stop(error = 'An error occurred') {
-    console.error(error);
+  fail(error = 'An error occurred') {
+    this.#spinner.fail(error)
     process.exit(1)
   }
 
@@ -47,6 +43,9 @@ export class Pipeline {
   }
 
   async init(cb) {
+
+    await this.#verifyNodeVersion()
+
     const choosenBranchToDeploy = await this.#wichEnv()
 
     try {
@@ -77,7 +76,7 @@ export class Pipeline {
     const value = await new Promise((resolve, reject) => {
       exec('git rev-parse --abbrev-ref HEAD', (err, stdout, stderr) => {
         if (err) {
-          console.error("couldn't read your current branch");
+          this.#spinner.fail("couldn't read your current branch")
           process.exit(1)
         }
 
@@ -92,5 +91,36 @@ export class Pipeline {
     })
 
     return value
+  }
+
+  #wichEnv = async () => {
+    const { environment } = await inquirer.prompt
+      (
+        {
+          name: 'environment',
+          type: 'list',
+          choices: this.#branches,
+          message: 'question',
+        },
+      )
+    return environment
+  }
+
+  async #verifyNodeVersion() {
+    if (this.#requireNodeVersion === false) return true
+
+    this.#spinner.start('Verifying node version')
+    if (this.#currentNodeVersion === this.#requiredNodeVersion) {
+      this.#spinner.succeed('Valid node version')
+      this.#spinner.stop()
+      this.#spinner.clear()
+      return true
+    }
+
+    await sleep(500)
+    this.#spinner.fail(`Node version mismatch, current: ${this.#currentNodeVersion}, required: ${this.#requiredNodeVersion ?? 'not defined'}`)
+    this.#spinner.stop()
+    this.#spinner.clear()
+    process.exit(1)
   }
 }
