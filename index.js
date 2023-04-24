@@ -11,6 +11,7 @@ export class Pipeline {
   #branches
   #__filename = fileURLToPath(import.meta.url);
   #__dirname = dirname(this.#__filename);
+  #spinner = ora('Loading unicorns')
 
   constructor(branches = []) {
     this.#branches = branches;
@@ -42,7 +43,7 @@ export class Pipeline {
     if (script === '') return
 
     execSync(script, { stdio: 'inherit' });
-    console.log('\n');
+    this.#cliSpace()
   }
 
   async init(cb) {
@@ -51,16 +52,23 @@ export class Pipeline {
     try {
       await this.#isCurrentBranchSameTo(choosenBranchToDeploy)
     } catch (error) {
-      console.error(`You're on the wrong branch`);
+      this.#cliSpace()
+      this.#spinner.fail("You're on the wrong branch")
+      this.#cliSpace()
       process.exit(1)
     }
 
-    const spinner = ora('Loading unicorns').start();
-    console.log('\n');
+    this.#spinner.start();
+    this.#cliSpace()
     cb(this)
-    spinner.succeed('deploy ok')
+    this.#spinner.succeed('Pipeline done')
     process.exit(0)
   }
+
+  #cliSpace() {
+    console.log('\n');
+  }
+
   async #isCurrentBranchSameTo(branchName = '') {
     if (branchName === '') {
       process.exit(1)
