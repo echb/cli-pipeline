@@ -7,41 +7,56 @@ import { version } from 'process';
 import { fileURLToPath } from 'url';
 import ora from 'ora';
 
-export const sleep = (ms = 1500) => new Promise((r) => setTimeout(r, ms));
+export const sleep = (ms = 1000) => new Promise((r) => setTimeout(r, ms));
 
 const SPINNER_TEXT = {
   loading: 'Loading...',
   error: 'An error occurred',
   wrongBranch: "You're on the wrong branch",
   verifyNodeV: 'Verifying node version',
-  validNodeV: 'Valid node version'
+  warnVerifyNodeV: 'Is highly recomended allow check node version',
+  validNodeV: 'Valid node version',
+  succeed: 'Task done',
 }
 
 export class Pipeline {
-  #branches
+  // #branches
   #__filename = fileURLToPath(import.meta.url);
   #__dirname = dirname(this.#__filename);
   #spinner = ora(SPINNER_TEXT.loading)
   #currentNodeVersion = parseInt(version.split('.').at(0).replace('v', ''))
   #requiredNodeVersion = null
   #requireNodeVersion = true
+  #initialQuestions = []
 
-  constructor({ branches = [], nodeVersion = null, requireNodeVersion = true }) {
-    this.#branches = branches;
+  constructor({ nodeVersion = null, requireNodeVersion = true, initialQuestions = [] }) {
+    // this.#branches = branches;
     this.#requiredNodeVersion = parseInt(nodeVersion)
     this.#requireNodeVersion = requireNodeVersion;
+    this.#initialQuestions = initialQuestions;
   }
 
   getPathFrom = (path = '') => join(this.#__dirname, path)
 
-  getBranches() {
-    return this.#branches
+  // getBranches() {
+  //   return this.#branches
+  // }
+
+  async cliUpdate(message = SPINNER_TEXT.error) {
+    await sleep(300)
+    this.#spinner.text = message
   }
 
-  message(message = SPINNER_TEXT.error) {
+  cliStop(message = SPINNER_TEXT.error) {
+    this.#spinner.stop(message)
+  }
+  cliRestart(message = SPINNER_TEXT.error) {
+    this.#spinner.start(message)
+  }
+  #message(message = SPINNER_TEXT.error) {
     this.#spinner.info(message)
-    this.#cliSpace()
-    process.exit(1)
+    // this.#cliSpace()
+    // process.exit(1)
   }
 
   fail(error = SPINNER_TEXT.error) {
@@ -60,24 +75,36 @@ export class Pipeline {
 
     await this.#verifyNodeVersion()
 
-    const choosenBranchToDeploy = await this.#questions()
+    // const choosenBranchToDeploy = await this.#askBranchToDeploy()
 
-    try {
-      await this.#isCurrentBranchSameTo(choosenBranchToDeploy)
-    } catch (error) {
-      this.#cliSpace()
-      this.#spinner.fail(SPINNER_TEXT.wrongBranch)
-      this.#cliSpace()
-      process.exit(1)
-    }
+    const questions = await this.aksOptions(this.#initialQuestions)
+
+    // process.exit(0)
+
+    // try {
+    //   await this.#isCurrentBranchSameTo(choosenBranchToDeploy)
+    // } catch (error) {
+    //   this.#cliSpace()
+    //   this.#spinner.fail(SPINNER_TEXT.wrongBranch)
+    //   this.#cliSpace()
+    //   process.exit(1)
+    // }
 
     this.#spinner.start(SPINNER_TEXT.loading);
     await sleep(500)
-    this.#cliSpace()
+    // this.#cliSpace()
 
-    await cb(this)
+    await cb(this, questions)
 
-    this.#spinner.succeed('Pipeline done')
+    // this.#spinner.succeed(SPINNER_TEXT.succeed)
+    // process.exit(0)
+    // this.done()
+  }
+
+  async done() {
+    await sleep(300)
+    this.#spinner.succeed(SPINNER_TEXT.succeed)
+    this.#spinner.clear()
     process.exit(0)
   }
 
@@ -85,7 +112,7 @@ export class Pipeline {
     console.log('\n');
   }
 
-  async #isCurrentBranchSameTo(branchName = '') {
+  async verifyBranch(branchName = '') {
     if (branchName === '') {
       process.exit(1)
     }
@@ -110,21 +137,41 @@ export class Pipeline {
     return value
   }
 
-  #questions = async () => {
-    const { environment } = await inquirer.prompt
-      (
-        {
-          name: 'environment',
-          type: 'list',
-          choices: this.#branches,
-          message: 'Select your branch to deploy',
-        },
-      )
-    return environment
+  // #askBranchToDeploy = async () => {
+  //   const a = await inquirer.prompt([
+  //     {
+  //       name: 'environment',
+  //       type: 'list',
+  //       choices: this.#branches,
+  //       message: 'Select your branch to deploy',
+  //     }
+  //   ])
+  //   console.log(a);
+  //   return a
+  // }
+
+  aksOptions = async (questions = []) => {
+    const a = await inquirer.prompt(
+      questions
+      // [
+      // {
+      //   name: 'environment',
+      //   type: 'list',
+      //   choices: this.#branches,
+      //   message: 'Select your branch to deploy',
+      // }
+      // ]
+    )
+    // console.log(a);
+    return a
   }
 
   async #verifyNodeVersion() {
-    if (this.#requireNodeVersion === false) return true
+    if (this.#requireNodeVersion === false) {
+      this.#spinner.warn(SPINNER_TEXT.warnVerifyNodeV)
+      await sleep(1000)
+      return true
+    }
 
     this.#spinner.start(SPINNER_TEXT.verifyNodeV)
     if (this.#currentNodeVersion === this.#requiredNodeVersion) {
