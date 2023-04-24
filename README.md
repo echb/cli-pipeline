@@ -1,13 +1,13 @@
 import
 
 ```js
-import { Pipeline } from './index.js';
+import { Pipeline } from 'cli_pipeline';
 ```
 
 example
 
 ```js
-import { Pipeline } from './index.js';
+import { Pipeline } from 'cli_pipeline';
 
 const pipeline = new Pipeline(['main']);
 
