@@ -1,10 +1,13 @@
-import
+# Import
 
 ```js
 import { Pipeline } from 'cli_pipeline';
 ```
 
-example
+# Example
+
+Pipeline file, `pipeline.js`
+<br>
 
 ```js
 import { Pipeline, sleep } from 'cli_pipeline';
@@ -73,6 +76,6 @@ pipeline.init(async (initialResponse, e) => {
 });
 ```
 
-run the pipeline
+run the cli pipeline
 
 `node ./pipeline.js`
