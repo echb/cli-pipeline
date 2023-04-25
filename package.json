@@ -4,9 +4,12 @@
   "description": "",
   "main": "index.js",
   "type": "module",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "dev": "node --watch .",
-    "g": "echo das"
+    "dev:test": "node --watch pipelineTest.js "
   },
   "keywords": [
     "cli"
@@ -14,7 +17,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "inquirer": "^9.2.0",
-    "ora": "^6.3.0"
+    "inquirer": "9.2.0",
+    "ora": "6.3.0"
   }
 }
