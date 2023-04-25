@@ -42,7 +42,7 @@ pipeline.init(async (initialResponse, e) => {
     await pipeline.cliRestart('Loading...')
     await sleep(1000)
     await pipeline.cliStop('stop')
-    const a = await pipeline.aksOptions([
+    const { environment } = await pipeline.aksOptions([
       {
         name: 'environment',
         type: 'list',
@@ -52,7 +52,7 @@ pipeline.init(async (initialResponse, e) => {
     ])
 
     try {
-      await pipeline.verifyBranch(a.environment)
+      await pipeline.verifyBranch(environment)
     } catch (error) {
       pipeline.fail('wrong branch')
     }
