@@ -1,5 +1,5 @@
 #!/usr/bin/enc node
-
+// @ts-check
 import inquirer from 'inquirer';
 import { join, dirname } from 'path';
 import { execSync, exec } from 'child_process';
@@ -29,6 +29,10 @@ export class Pipeline {
   #requireNodeVersion = true
   #initialQuestions = []
 
+  /**
+   * @typedef {import('./types').PipelineParam} PipelineParam
+   * @param {PipelineParam}
+   */
   constructor({ nodeVersion = null, requireNodeVersion = true, initialQuestions = [] }) {
     // this.#branches = branches;
     this.#requiredNodeVersion = parseInt(nodeVersion)
@@ -47,10 +51,13 @@ export class Pipeline {
     this.#spinner.text = message
   }
 
-  cliStop(message = SPINNER_TEXT.error) {
+  async cliStop(message = SPINNER_TEXT.error) {
+    await sleep(300)
     this.#spinner.stop(message)
   }
-  cliRestart(message = SPINNER_TEXT.error) {
+
+  async cliRestart(message = SPINNER_TEXT.error) {
+    await sleep(300)
     this.#spinner.start(message)
   }
   #message(message = SPINNER_TEXT.error) {
@@ -64,9 +71,14 @@ export class Pipeline {
     process.exit(1)
   }
 
+  /**
+   * @param {string} script
+   * Here you can run cli commands like you usually do with normal cli
+   */
   runScrip(script = '') {
     if (script === '') return
 
+    this.#cliSpace()
     execSync(script, { stdio: 'inherit' });
     this.#cliSpace()
   }
@@ -94,7 +106,7 @@ export class Pipeline {
     await sleep(500)
     // this.#cliSpace()
 
-    await cb(this, questions)
+    await cb(questions, this)
 
     // this.#spinner.succeed(SPINNER_TEXT.succeed)
     // process.exit(0)
@@ -188,3 +200,38 @@ export class Pipeline {
     process.exit(1)
   }
 }
+
+
+
+class TestSuite {
+  #suite = []
+
+  expect(value) {
+    return this
+  }
+
+  expectToBe(value, expected) {
+    const result = value === expected
+    this.#suite.push(result)
+
+    return result
+  }
+
+  results() {
+    console.log('\n')
+    console.table(this.#suite);
+    return this.#suite.every((e) => e === true)
+  }
+}
+
+// const g = new TestSuite()
+
+// async function logJSONData() {
+//   const response = await fetch("https://jsonplaceholder.typicode.com/todos/1");
+//   const jsonData = await response.json();
+
+//   g.expectToBe(jsonData.id, 1)
+
+//   return true
+// }
+
