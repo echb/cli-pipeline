@@ -1,4 +1,4 @@
-#!/usr/bin/enc node
+// #!/usr/bin/enc node
 // @ts-check
 import inquirer from 'inquirer';
 import { join, dirname } from 'path';

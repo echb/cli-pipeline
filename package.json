@@ -14,10 +14,20 @@
   "keywords": [
     "cli"
   ],
-  "author": "",
+  "author": "Emmanuel",
+  "contributors": [
+    {
+      "name": "Emmanuel",
+      "url": "https://www.npmjs.com/~admirableyetti"
+    }
+  ],
   "license": "ISC",
   "devDependencies": {
     "inquirer": "9.2.0",
     "ora": "6.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/echb/cli-pipeline"
   }
 }
