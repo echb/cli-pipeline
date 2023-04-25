@@ -5,44 +5,43 @@ const pipeline = new Pipeline({
   requireNodeVersion: true,
   initialQuestions: [
     {
-      name: 'environment',
+      name: 'question',
       type: 'list',
       choices: ['serve', 'deploy'],
-      message: 'Select your branch to deploy',
+      message: 'Select your option',
     },
   ],
 });
 
-pipeline.init(async (e, initialResponse) => {
-
-
-  // pipeline.runScrip('yarn run g')
-  // console.log(questions);
-  // const is = await logJSONData()
-
-  // if (is === false) {
-  //   // pipeline.message('')
-  //   pipeline.fail('validation failed')
-  // }
-
-  // pipeline.runScrip('node -v')
-
-  // --------------
-  // console.log(response.environment);
-  if (initialResponse.environment === 'serve') {
-    await pipeline.cliUpdate('Running tests')
-    const is = await logJSONData()
-
-    if (is === false) {
-      pipeline.fail('validation failed')
-    }
-
+pipeline.init(async (initialResponse, e) => {
+  pipeline.runScrip('echo 12')
+  if (initialResponse.question === 'serve') {
     await pipeline.done()
     return
   }
 
-  if (initialResponse.environment === 'deploy') {
-    pipeline.cliStop('stop')
+  if (initialResponse.question === 'deploy') {
+    await pipeline.cliUpdate('Running tests')
+    await sleep(1000)
+    await pipeline.cliStop('stop')
+
+    const response = await pipeline.aksOptions([
+      {
+        name: 'continue',
+        type: 'confirm',
+        choices: ['master', 'dev'],
+        message: 'Select your branch to deploy',
+        default: false
+      },
+    ])
+
+    if (response.continue === false) {
+      await pipeline.done()
+    }
+
+    await pipeline.cliRestart('Loading...')
+    await sleep(1000)
+    await pipeline.cliStop('stop')
     const a = await pipeline.aksOptions([
       {
         name: 'environment',
@@ -51,7 +50,6 @@ pipeline.init(async (e, initialResponse) => {
         message: 'Select your branch to deploy',
       },
     ])
-    pipeline.cliRestart('loading')
 
     try {
       await pipeline.verifyBranch(a.environment)
@@ -59,22 +57,8 @@ pipeline.init(async (e, initialResponse) => {
       pipeline.fail('wrong branch')
     }
 
-    pipeline.done()
+    await pipeline.cliRestart('Loading...')
+    await sleep(1000)
+    await pipeline.done()
   }
 })
-
-
-// console.table([
-//   {
-//     a: 1,
-//     name: 'das',
-//     valid: true
-//   }
-// ])
-
-async function logJSONData() {
-  const response = await fetch("https://jsonplaceholder.typicode.com/todos/1");
-  const jsonData = await response.json();
-  // console.log(jsonData);
-  return true
-}
