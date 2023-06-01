@@ -124,23 +124,37 @@ export class Pipeline {
     console.log('\n');
   }
 
+  async getBranches() {
+    const value = await new Promise((resolve, _) => {
+      exec('git branch', (err, stdout, stderr) => {
+        if (err) {
+          this.#spinner.fail("couldn't read your branches")
+          resolve(null)
+        }
+
+        resolve(stdout.replace(/(\r\n|\n|\*|\r)/gm, "").split(' ').filter((e) => e !== ''))
+      });
+    })
+    return value
+  }
+
   async verifyBranch(branchName = '') {
     if (branchName === '') {
       process.exit(1)
     }
 
-    const value = await new Promise((resolve, reject) => {
+    const value = await new Promise((resolve, _) => {
       exec('git rev-parse --abbrev-ref HEAD', (err, stdout, stderr) => {
         if (err) {
           this.#spinner.fail("couldn't read your current branch")
-          process.exit(1)
+          resolve(false)
         }
 
         if (typeof stdout === 'string' && (stdout.trim() === branchName)) {
           resolve(true)
         }
 
-        reject(false)
+        resolve(false)
 
       });
 
